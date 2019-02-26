@@ -42,7 +42,7 @@ which has the lexicographically smallest signature. For example, if
 the output should be sorted by board signature with smallest values
 first.
 
-The problem statement also include details of the input file format
+The problem statement also includes details of the input file format
 and the required output format for displaying the solved boards. I
 won't reproduce all that here as it isn't very interesting and should
 be clear from the code and sample data.
@@ -65,7 +65,7 @@ below on symmetry constraints). If all tiles are unique this results
 in 36 new boards (i.e. one board each with each of the four rotations
 of the nine tiles in the top left corner). The resulting boards are
 then each fed back into the board builder to generate all of the new
-boards reachable from these initial boards. If there are valid boards
+boards reachable from these initial boards. If there are no valid boards
 reachable from a given tile configuration the board builder returns an
 empty list of boards and this branch of the solution space is
 abandoned. This algorithm is repeated until all solutions have been
@@ -79,7 +79,7 @@ desired solution. It is much more efficient to never generate these
 duplicate rotations in the first place.
 
 This can be achieved by a few additional constraints in the board builder
-based on symmetric properties of the puzzle.
+based on the symmetry properties of the puzzle.
 
 Because we only want the rotation with the smallest signature we can
 immediately see that the tiles labled 7, 8 and 9 should never be
@@ -125,9 +125,9 @@ pattern solves 10,000 puzzles in about 45,000 milliseconds or about
 4.5 milliseconds per puzzle.
 
 Here are some representative runs using the Scala REPL on my laptop, a
-Lenova P50 with an Intel Core i7 at 2.6GHz. This is obviously not a
+Lenovo P50 with an Intel Core i7 at 2.6GHz. This is obviously not a
 definitive measure of performance but these results have been pretty
-stable.
+stable and are useful for relative comparisons of different algorithms.
 
 ```scala
 scala> timeSolutions(boardStream.take(10000).toList)(ArrowPuzzleSolver.simpleSolver(_)(SymmetryBuilder))
@@ -151,14 +151,15 @@ because there will always be at least one configuration that places
 all 9 tiles, while boards with no solutions may be invalidated quite
 quickly.
 
-I also impelmented a basic parallel solver that tried to improve
-performance by using multiple cores in parallel to solve a
-board. However, the current board solver is efficient enough that the
-extra overhead of context switching and combining results from
-multiple CPUs very much outweighed any advantage from parallel
-execution. Parallelism might be use for solving several different
-boards in parallel, but seems unlikely that any simple parallel
-processing will improve single board solving times. (Famous last words).
+Switching to the `scala.parallel.collection` by adding `.par` to
+the results of `builder.boardsFrom` reduced execution time to below 3ms
+per board. CPU utilization was about 85% for all 8 cores.
+
+```scala
+scala> timeSolutions(boardStream.take(10000).toList)(ArrowPuzzleSolver.parSimpleSolver(_)(SymmetryBuilder2))
+res1: String = 10000 solved in 26743ms. Avg=2.6743ms/puzzle
+```
+
 
 
 

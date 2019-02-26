@@ -1,8 +1,5 @@
 package org.saegesser.puzzle
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-
 // NOTE: The BoardBuilders are separated from the rest of the solver
 // simply to make it easier to compare the performance of different
 // solutions.
@@ -118,21 +115,20 @@ object ArrowPuzzleSolver {
     helper(List(), board).sortBy(_.signature)
   }
 
-  /** An experimental parallel puzzle solver. This was a failed experiment.
-    *
+  /** A simple recursive puzzle solver.
     */
-  def parSimpleSolver(board: Board)(builder: BoardBuilder): Future[List[Board]] = {
-    def helper(board: Board): Future[List[Board]] = {
+  def parSimpleSolver(board: Board)(builder: BoardBuilder): List[Board] = {
+    def helper(accum: List[Board], board: Board): List[Board] = {
       val newBoards = builder.boardsFrom(board)
       if(newBoards.isEmpty) {
-        if(board.isSolved) Future.successful(List(board))
-        else Future.successful(List())
+        if(board.isSolved) board +: accum
+        else               accum
       } else {
-        Future.foldLeft(newBoards.map(helper))(List.empty[Board]) { (accum, bs) => bs ++ accum }
+        newBoards.par.flatMap(b => helper(accum, b)).toList
       }
     }
 
-    helper(board) map { _.sortBy(_.signature) }
+    helper(List(), board).sortBy(_.signature)
   }
 }
 

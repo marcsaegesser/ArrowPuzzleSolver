@@ -19,6 +19,16 @@ sealed trait Tile {
   /** Return string representation of this tile suitable for program output.
     */
   def show: String = s"$label. $edges"
+}
+
+object Tile {
+  /** Create a new FreeTile with the given label and
+    * edges specified as an array of Strings. These strings
+    * must be of the form "CS" where C is a valid Color code
+    * and S is a valid Shape code.
+    */
+  def apply(label: String, edges: Array[String]): Tile =
+    FreeTile(label, Edges(edges))
 
   /** A predicate useful for finding rotations satisfying a constraint.
     *
@@ -37,16 +47,6 @@ sealed trait Tile {
     }
 }
 
-object Tile {
-  /** Create a new FreeTile with the given label and
-    * edges specified as an array of Strings. These strings
-    * must be of the form "CS" where C is a valid Color code
-    * and S is a valid Shape code.
-    */
-  def apply(label: String, edges: Array[String]): Tile =
-    FreeTile(label, Edges(edges))
-}
-
 /** A Free tile.
   */
 case class FreeTile(label: String, edges: Edges) extends Tile {
@@ -59,7 +59,7 @@ case class FreeTile(label: String, edges: Edges) extends Tile {
     */
   def withConstraint(c: Constraint): Vector[FixedTile] = {
     rotations
-      .filter(r => matchesConstraint(r, c))
+      .filter(r => Tile.matchesConstraint(r, c))
       .map { es => FixedTile(label, es) }
   }
 }
@@ -71,7 +71,7 @@ case class FixedTile(label: String, edges: Edges) extends Tile {
     * the constraint or not.
     */
   def withConstraint(c: Constraint): Vector[FixedTile] = {
-    if(matchesConstraint(edges, c)) Vector(this)
+    if(Tile.matchesConstraint(edges, c)) Vector(this)
     else Vector()
   }
 }

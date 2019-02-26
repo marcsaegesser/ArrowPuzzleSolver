@@ -1,8 +1,6 @@
 package org.saegesser.test
 
 import scala.util.Random
-import scala.concurrent._
-import scala.concurrent.duration._
 import org.scalacheck._
 import com.typesafe.scalalogging.StrictLogging
 import org.saegesser.puzzle._
@@ -136,7 +134,8 @@ object SolverProperties extends Properties("ArrowPuzzleSolver") with StrictLoggi
 
   property("solves solveable board in parallel") = forAll(genSolvedBoard) { board =>
     val shuffled = shuffleBoard(board)
-    val results = Await.result(ArrowPuzzleSolver.parSimpleSolver(shuffled)(SymmetryBuilder), 30.seconds)
+    val results = ArrowPuzzleSolver.parSimpleSolver(shuffled)(SymmetryBuilder2)
+    // val results = Await.result(ArrowPuzzleSolver.parSimpleSolver(shuffled)(SymmetryBuilder), 30.seconds)
 
     ("evidence" + shuffled.show + "->" + results.map(_.show)) |: all(
       "Size" |: results.size >= 1,
