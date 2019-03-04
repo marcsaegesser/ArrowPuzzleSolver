@@ -20,10 +20,10 @@ trait BoardBuilder {
   */
 object SymmetryBuilder extends BoardBuilder {
   /** Generate all the boards reachable from the given by fixing one more tile.
-    * An empty list is returned if no new boards are reachable.
+    * An empty Vector is returned if no new boards are reachable.
     *
     * Algorithm:
-    *   - Location the first free tile (left to right, top to bottom)
+    *   - Locate the first free tile (left to right, top to bottom)
     *   - Determine the constraints for this location
     *   - Search all free tiles for constraint matches
     *   - Exclude matches that violate symmetry rules
@@ -44,19 +44,19 @@ object SymmetryBuilder extends BoardBuilder {
           t.isEmpty ||                                      // Don't consider tiles that can't match
           (point == 0 && t.head.label >= "7") ||            // Symmetry constraints
           ((point == 2 || point == 6 || point == 8) && (t.head.label < board.tiles(0).label))
-        }.map { case (ts, i) =>
+        }.flatMap { case (ts, i) =>
             ts.map(t => new Board(updateTiles(board.tiles, free, t, point, i)))
-        }.flatten
+        }
     }.getOrElse(Vector())
   }
 }
 
 object SymmetryBuilder2 extends BoardBuilder {
   /** Generate all the boards reachable from the given by fixing one more tile.
-    * An empty list is returned if no new boards are reachable.
+    * An empty Vector is returned if no new boards are reachable.
     *
     * Algorithm:
-    *   - Location the next free tile in order (1, 2, 5, 4, 3, 6, 7, 8, 9)
+    *   - Locate the next free tile in order (1, 2, 5, 4, 3, 6, 7, 8, 9)
     *   - Determine the constraints for this location
     *   - Search all free tiles for constraint matches
     *   - Exclude matches that violate symmetry rules
@@ -72,7 +72,7 @@ object SymmetryBuilder2 extends BoardBuilder {
     /* This implements a tile selection order of 1 2 5 4 3 6 7 8 9.
      *
      * This makes the placement of the 4th tile require 2 edge
-     * constraints. In simple order the first 2 edge constraint
+     * constraints. In simple order the first 2-edge constraint
      * happens with the 5th placement.  Moving this one earlier
      * invalidates many boards sooner and significantly improves
      * performance.
@@ -82,17 +82,17 @@ object SymmetryBuilder2 extends BoardBuilder {
       else if(board.freeTiles.size == 6) Option(board.freeTiles(1))
       else board.freeTiles.headOption
 
-    f.map { case (free, point) =>                           // The free tile and its index
-      val c = board.constraintsFor(point)                   // Constraints for point
+    f.map { case (free, point) =>                         // The free tile and its index
+      val c = board.constraintsFor(point)                 // Constraints for point
       board.freeTiles
-        .map { case (t, i) => (t.withConstraint(c), i) }    // Constraint search for point
+        .map { case (t, i) => (t.withConstraint(c), i) }  // Constraint search for point
         .filterNot { case (t, _) =>
-          t.isEmpty ||                                      // Don't consider tiles that can't match
-          (point == 0 && t.head.label >= "7") ||            // Symmetry constraints
+          t.isEmpty ||                                     // Don't consider tiles that can't match
+          (point == 0 && t.head.label >= "7") ||              // Symmetry constraints
           ((point == 2 || point == 6 || point == 8) && (t.head.label < board.tiles(0).label))
-        }.map { case (ts, i) =>
+        }.flatMap { case (ts, i) =>
             ts.map(t => new Board(updateTiles(board.tiles, free, t, point, i)))
-        }.flatten
+        }
     }.getOrElse(Vector())
   }
 }

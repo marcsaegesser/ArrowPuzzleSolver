@@ -19,6 +19,17 @@ sealed trait Tile {
   /** Return string representation of this tile suitable for program output.
     */
   def show: String = s"$label. $edges"
+
+  /** A predicate useful for finding rotations satisfying a constraint.
+    */
+  private[puzzle] def matchesConstraint(c: Constraint): Boolean =
+    edges match {
+      case Edges(t, r, b, l) =>
+        c.t.map(_ == t).getOrElse(true) && // Either no  constraint or a matching constraint
+        c.r.map(_ == r).getOrElse(true) &&
+        c.b.map(_ == b).getOrElse(true) &&
+        c.l.map(_ == l).getOrElse(true)
+    }
 }
 
 object Tile {
@@ -29,39 +40,20 @@ object Tile {
     */
   def apply(label: String, edges: Array[String]): Tile =
     FreeTile(label, Edges(edges))
-
-  /** A predicate useful for finding rotations satisfying a constraint.
-    *
-    * Note: Based on profiling data this is the workhorse of the
-    * algorithm, accounting for about 3% of CPU time.  If anyone is
-    * looking for optimzation this is the place to start.  MAS -
-    * 3/5/2018.
-    */
-  private[puzzle] def matchesConstraint(es: Edges, c: Constraint): Boolean =
-    es match {
-      case Edges(t, r, b, l) =>
-        c.t.map(_ == t).getOrElse(true) && // Either no  constraint or a matching constraint
-        c.r.map(_ == r).getOrElse(true) &&
-        c.b.map(_ == b).getOrElse(true) &&
-        c.l.map(_ == l).getOrElse(true)
-    }
 }
 
 /** A Free tile.
   */
 case class FreeTile(label: String, edges: Edges) extends Tile {
   // Compute all _unique_ rotations of the tile's edges.
-  val rotations = edges.rotations
+  val rotations = edges.rotations.map(r => FixedTile(label, r))
 
   /** Return all the rotations of this tile that match
     * the given constraints. The returned tiles are
     * Fixed tiles.
     */
-  def withConstraint(c: Constraint): Vector[FixedTile] = {
-    rotations
-      .filter(r => Tile.matchesConstraint(r, c))
-      .map { es => FixedTile(label, es) }
-  }
+  def withConstraint(c: Constraint): Vector[FixedTile] =
+    rotations.filter(_.matchesConstraint(c))
 }
 
 case class FixedTile(label: String, edges: Edges) extends Tile {
@@ -70,10 +62,9 @@ case class FixedTile(label: String, edges: Edges) extends Tile {
     * so either either the tiles current edge configuration matches
     * the constraint or not.
     */
-  def withConstraint(c: Constraint): Vector[FixedTile] = {
-    if(Tile.matchesConstraint(edges, c)) Vector(this)
-    else Vector()
-  }
+  def withConstraint(c: Constraint): Vector[FixedTile] =
+    if(matchesConstraint(c)) Vector(this)
+    else                     Vector()
 }
 
 /** Represents a game board.

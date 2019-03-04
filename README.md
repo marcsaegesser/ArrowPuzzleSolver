@@ -114,15 +114,15 @@ constraint. So encountering this constraint sooner greatly reducdes
 the solution space that needs to be searched.
 
 Experimental results comparing this optimization to the original
-algorithm show almost a 30% decrease in the time required to find all
+algorithm show more than a 30% decrease in the time required to find all
 valid solutions.
 
 ## Results
 The initial board solver, without the optimal tile placement order,
-solves 10,000 solvable puzzles in around 64,000 milliseconds, or about
-6.4 milliseconds per puzzle. The solver with the optimal placement
-pattern solves 10,000 puzzles in about 45,000 milliseconds or about
-4.5 milliseconds per puzzle.
+solves 10,000 solvable puzzles in around 47,000 milliseconds, or about
+4.7 milliseconds per puzzle. The solver with the optimal placement
+pattern solves 10,000 puzzles in about 31,000 milliseconds or about
+3.1 milliseconds per puzzle.
 
 Here are some representative runs using the Scala REPL on my laptop, a
 Lenovo P50 with an Intel Core i7 at 2.6GHz. This is obviously not a
@@ -131,10 +131,10 @@ stable and are useful for relative comparisons of different algorithms.
 
 ```scala
 scala> timeSolutions(boardStream.take(10000).toList)(ArrowPuzzleSolver.simpleSolver(_)(SymmetryBuilder))
-res1: String = 10000 solved in 63874ms. Avg=6.3874ms/puzzle
+res1: String = 10000 solved in 47318ms. Avg=4.7318ms/puzzle
 
 scala> timeSolutions(boardStream.take(10000).toList)(ArrowPuzzleSolver.simpleSolver(_)(SymmetryBuilder2))
-res4: String = 10000 solved in 45011ms. Avg=4.5011ms/puzzle
+res3: String = 10000 solved in 30755ms. Avg=3.0755ms/puzzle
 ```
 
 The boardStream value is defined as
@@ -143,21 +143,21 @@ The boardStream value is defined as
 val boardStream = Stream.continually(genShuffledBoard.sample).filter(_.isDefined).map(_.get)
 ```
 
-Where the `genShuffledBoard` is a ScalaCheck generator that creates
+Where `genShuffledBoard` is a ScalaCheck generator that creates
 random solvable boards. It works by creating a random solved board and
 then shuffling and rotating the tiles. Solving solvable boards will in
 general take longer than solving truly random board configurations
 because there will always be at least one configuration that places
-all 9 tiles, while boards with no solutions may be invalidated quite
+all 9 tiles. Boards with no solutions may be invalidated quite
 quickly.
 
 Switching to the `scala.parallel.collection` by adding `.par` to
-the results of `builder.boardsFrom` reduced execution time to below 3ms
+the results of `builder.boardsFrom` reduced execution time to about 2ms
 per board. CPU utilization was about 85% for all 8 cores.
 
 ```scala
 scala> timeSolutions(boardStream.take(10000).toList)(ArrowPuzzleSolver.parSimpleSolver(_)(SymmetryBuilder2))
-res1: String = 10000 solved in 26743ms. Avg=2.6743ms/puzzle
+res5: String = 10000 solved in 20813ms. Avg=2.0813ms/puzzle
 ```
 
 
